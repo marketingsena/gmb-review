@@ -2,60 +2,53 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Copy Review & Open Google</title>
+  <title>Google Review</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    .box {
-      background: #fff;
-      padding: 30px;
-      border-radius: 8px;
-      width: 400px;
-      text-align: center;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
     }
     textarea {
       width: 100%;
-      height: 120px;
-      margin-bottom: 15px;
+      height: 160px;
+      padding: 12px;
+      font-size: 14px;
     }
     button {
-      background: #1a73e8;
-      color: #fff;
-      border: none;
-      padding: 12px 20px;
-      cursor: pointer;
-      border-radius: 5px;
+      margin-top: 12px;
+      padding: 12px;
+      width: 100%;
       font-size: 16px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
 
-<div class="box">
-  <h3>Your Google Review</h3>
-  <textarea id="reviewText">
-PASTE REVIEW HERE (Make.com output)
-  </textarea>
-  <button onclick="copyAndOpen()">Copy Review & Open Google</button>
-</div>
+<h2>Your Google Review</h2>
+
+<textarea id="review" readonly></textarea>
+
+<button onclick="copyAndOpen()">Copy & Open Google Review</button>
 
 <script>
-  function copyAndOpen() {
-    const text = document.getElementById("reviewText");
-    text.select();
-    document.execCommand("copy");
+  const params = new URLSearchParams(window.location.search);
+  const rawReview = params.get("review") || "";
+  const reviewText = decodeURIComponent(rawReview);
 
-    window.open(
-      "https://g.page/r/CVk-75SGi0S0EAE/review",
-      "_blank"
-    );
+  const textarea = document.getElementById("review");
+  textarea.value = reviewText;
+
+  function copyAndOpen() {
+    navigator.clipboard.writeText(reviewText).then(() => {
+      window.open(
+        "https://g.page/r/CVk-75SGi0S0EAE/review",
+        "_blank"
+      );
+    });
   }
 </script>
 
