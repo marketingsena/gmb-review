@@ -1,56 +1,37 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Google Review</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      max-width: 600px;
-      margin: auto;
-    }
-    textarea {
-      width: 100%;
-      height: 160px;
-      padding: 12px;
-      font-size: 14px;
-    }
-    button {
-      margin-top: 12px;
-      padding: 12px;
-      width: 100%;
-      font-size: 16px;
-      cursor: pointer;
-    }
-  </style>
+  <title>Post Google Review</title>
+  <meta charset="utf-8">
 </head>
-<body>
+<body style="font-family:Arial; max-width:600px; margin:40px auto;">
 
-<h2>Your Google Review</h2>
+  <h2>Copy & Post Your Google Review</h2>
 
-<textarea id="review" readonly></textarea>
+  <textarea id="reviewText" rows="8" style="width:100%;"></textarea>
+  <br><br>
 
-<button onclick="copyAndOpen()">Copy & Open Google Review</button>
+  <button onclick="copyAndOpen()" style="padding:12px 20px;font-size:16px;">
+    Copy Review & Open Google
+  </button>
 
-<script>
-  const params = new URLSearchParams(window.location.search);
-  const rawReview = params.get("review") || "";
-  const reviewText = decodeURIComponent(rawReview);
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const review = params.get("review") || "";
+    document.getElementById("reviewText").value = review;
 
-  const textarea = document.getElementById("review");
-  textarea.value = reviewText;
+    function copyAndOpen() {
+      const text = document.getElementById("reviewText").value;
 
-  function copyAndOpen() {
-    navigator.clipboard.writeText(reviewText).then(() => {
-      window.open(
-        "https://g.page/r/CVk-75SGi0S0EAE/review",
-        "_blank"
-      );
-    });
-  }
-</script>
+      navigator.clipboard.writeText(text).then(() => {
+        window.open(
+          "https://g.page/r/CVk-75SGi0S0EAE/review",
+          "_blank"
+        );
+      });
+    }
+  </script>
 
 </body>
 </html>
+
