@@ -46,19 +46,10 @@ textarea {
   font-size: 13px;
   color: #555;
 }
-#status {
-  text-align: center;
-  margin-top: 10px;
-  font-size: 14px;
-}
-.loading {
-  color: #0066cc;
-}
 .error {
   color: red;
-}
-.success {
-  color: green;
+  margin-top: 10px;
+  text-align: center;
 }
 </style>
 </head>
@@ -106,37 +97,32 @@ textarea {
   <button type="submit">Generate Review</button>
 </form>
 
-<div id="status"></div>
+<div id="error" class="error"></div>
 
 <hr>
 
 <h3>Your Google Review</h3>
-<textarea id="review" readonly placeholder="Your review will appear here..."></textarea>
+<textarea id="review" readonly></textarea>
 
 <button onclick="copyAndOpen()">Copy & Open Google Review</button>
 
 <script>
 const webhookURL = "https://hook.us2.make.com/0gkgw9kdw46a3csmg5dqn9jqug03y1go";
-const statusBox = document.getElementById("status");
-const reviewBox = document.getElementById("review");
 
 document.getElementById("reviewForm").addEventListener("submit", async function(e) {
   e.preventDefault();
-
-  statusBox.className = "loading";
-  statusBox.textContent = "Generating your review, please wait...";
+  document.getElementById("error").innerText = "";
 
   const selectedServices = Array.from(
     document.querySelectorAll('input[name="services"]:checked')
   ).map(el => el.value);
 
   if (selectedServices.length === 0) {
-    statusBox.className = "error";
-    statusBox.textContent = "Please select at least one service.";
+    alert("Please select at least one service.");
     return;
   }
 
-  const location = document.getElementById("location").value || "";
+  const location = document.getElementById("location").value;
 
   try {
     const response = await fetch(webhookURL, {
@@ -148,32 +134,32 @@ document.getElementById("reviewForm").addEventListener("submit", async function(
       })
     });
 
-    if (!response.ok) {
-      throw new Error("Webhook failed");
-    }
+    const text = await response.text();
 
-    const data = await response.json();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error("Invalid response from server");
+    }
 
     if (!data.review) {
-      throw new Error("No review returned");
+      throw new Error("Review not received");
     }
 
-    reviewBox.value = data.review;
-    statusBox.className = "success";
-    statusBox.textContent = "Review generated successfully ✔";
+    document.getElementById("review").value = data.review;
 
   } catch (err) {
-    statusBox.className = "error";
-    statusBox.textContent = "Something went wrong. Please try again.";
+    document.getElementById("error").innerText =
+      "Something went wrong. Please try again.";
     console.error(err);
   }
 });
 
 function copyAndOpen() {
-  const text = reviewBox.value;
-
+  const text = document.getElementById("review").value;
   if (!text) {
-    alert("Please generate the review first.");
+    alert("Please generate a review first.");
     return;
   }
 
