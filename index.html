@@ -51,6 +51,11 @@ textarea {
   margin-top: 10px;
   text-align: center;
 }
+.loading {
+  text-align: center;
+  margin-top: 10px;
+  color: #333;
+}
 </style>
 </head>
 
@@ -73,22 +78,9 @@ textarea {
     <label><input type="checkbox" name="services" value="GMB Suspension Removal"> GMB Suspension Removal</label>
     <label><input type="checkbox" name="services" value="GMB Management"> GMB Management</label>
     <label><input type="checkbox" name="services" value="Local SEO"> Local SEO</label>
-    <label><input type="checkbox" name="services" value="Video Marketing"> Video Marketing</label>
-    <label><input type="checkbox" name="services" value="Video Editing"> Video Editing</label>
-    <label><input type="checkbox" name="services" value="Graphic Design"> Graphic Design</label>
-    <label><input type="checkbox" name="services" value="WhatsApp Marketing"> WhatsApp Marketing</label>
-    <label><input type="checkbox" name="services" value="NFC + QR Code Digital Visiting Card"> NFC + QR Code Digital Visiting Card</label>
-    <label><input type="checkbox" name="services" value="Content Marketing & Writing"> Content Marketing & Writing</label>
     <label><input type="checkbox" name="services" value="SEO"> SEO</label>
-    <label><input type="checkbox" name="services" value="GMB Ads"> GMB Ads</label>
-    <label><input type="checkbox" name="services" value="Business Consulting"> Business Consulting</label>
-    <label><input type="checkbox" name="services" value="AI Automation"> AI Automation</label>
-    <label><input type="checkbox" name="services" value="Advertising & Branding"> Advertising & Branding</label>
     <label><input type="checkbox" name="services" value="Website Development & Design"> Website Development & Design</label>
-    <label><input type="checkbox" name="services" value="Software Development"> Software Development</label>
     <label><input type="checkbox" name="services" value="Mobile App Development"> Mobile App Development</label>
-    <label><input type="checkbox" name="services" value="CRM Development"> CRM Development</label>
-    <label><input type="checkbox" name="services" value="Landing Page Development"> Landing Page Development</label>
   </div>
 
   <label style="margin-top:15px;"><strong>Your City / Area</strong></label>
@@ -97,6 +89,7 @@ textarea {
   <button type="submit">Generate Review</button>
 </form>
 
+<div id="loading" class="loading"></div>
 <div id="error" class="error"></div>
 
 <hr>
@@ -111,7 +104,9 @@ const webhookURL = "https://hook.us2.make.com/0gkgw9kdw46a3csmg5dqn9jqug03y1go";
 
 document.getElementById("reviewForm").addEventListener("submit", async function(e) {
   e.preventDefault();
+
   document.getElementById("error").innerText = "";
+  document.getElementById("loading").innerText = "Generating your review…";
 
   const selectedServices = Array.from(
     document.querySelectorAll('input[name="services"]:checked')
@@ -119,6 +114,7 @@ document.getElementById("reviewForm").addEventListener("submit", async function(
 
   if (selectedServices.length === 0) {
     alert("Please select at least one service.");
+    document.getElementById("loading").innerText = "";
     return;
   }
 
@@ -136,20 +132,15 @@ document.getElementById("reviewForm").addEventListener("submit", async function(
 
     const text = await response.text();
 
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      throw new Error("Invalid response from server");
+    if (!text || text.trim().length < 10) {
+      throw new Error("Empty response");
     }
 
-    if (!data.review) {
-      throw new Error("Review not received");
-    }
-
-    document.getElementById("review").value = data.review;
+    document.getElementById("review").value = text;
+    document.getElementById("loading").innerText = "";
 
   } catch (err) {
+    document.getElementById("loading").innerText = "";
     document.getElementById("error").innerText =
       "Something went wrong. Please try again.";
     console.error(err);
