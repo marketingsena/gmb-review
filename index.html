@@ -1,37 +1,69 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Post Google Review</title>
-  <meta charset="utf-8">
+<meta charset="UTF-8">
+<title>Leave a Google Review</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body { font-family: Arial; max-width: 600px; margin: auto; padding: 20px; }
+select, input, button, textarea { width: 100%; margin: 10px 0; padding: 10px; }
+textarea { height: 130px; }
+</style>
 </head>
-<body style="font-family:Arial; max-width:600px; margin:40px auto;">
+<body>
 
-  <h2>Copy & Post Your Google Review</h2>
+<h2>Share Your Experience</h2>
 
-  <textarea id="reviewText" rows="8" style="width:100%;"></textarea>
-  <br><br>
+<!-- FORM -->
+<div id="formBox">
+  <label>Select Services</label>
+  <select id="services" multiple>
+    <option>SEO</option>
+    <option>GMB Management</option>
+    <option>Social Media Marketing</option>
+    <option>Lead Generation</option>
+  </select>
 
-  <button onclick="copyAndOpen()" style="padding:12px 20px;font-size:16px;">
-    Copy Review & Open Google
-  </button>
+  <label>Your City</label>
+  <input type="text" id="city" placeholder="e.g. Surat">
 
-  <script>
-    const params = new URLSearchParams(window.location.search);
-    const review = params.get("review") || "";
-    document.getElementById("reviewText").value = review;
+  <button onclick="submitForm()">Generate Review</button>
+</div>
 
-    function copyAndOpen() {
-      const text = document.getElementById("reviewText").value;
+<!-- RESULT -->
+<div id="resultBox" style="display:none;">
+  <h3>Your Review</h3>
+  <textarea id="reviewText"></textarea>
+  <button onclick="copyAndOpen()">Copy & Open Google Review</button>
+</div>
 
-      navigator.clipboard.writeText(text).then(() => {
-        window.open(
-          "https://g.page/r/CVk-75SGi0S0EAE/review",
-          "_blank"
-        );
-      });
-    }
-  </script>
+<script>
+const WEBHOOK_URL = "https://hook.us2.make.com/0gkgw9kdw46a3csmg5dqn9jqug03y1go";
+
+function submitForm() {
+  const services = [...document.getElementById("services").selectedOptions].map(o => o.value).join(", ");
+  const city = document.getElementById("city").value;
+
+  fetch(WEBHOOK_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ services, city })
+  })
+  .then(res => res.json())
+  .then(data => {
+    document.getElementById("reviewText").value = data.review;
+    document.getElementById("formBox").style.display = "none";
+    document.getElementById("resultBox").style.display = "block";
+  });
+}
+
+function copyAndOpen() {
+  const text = document.getElementById("reviewText").value;
+  navigator.clipboard.writeText(text).then(() => {
+    window.open("https://g.page/r/CVk-75SGi0S0EAE/review","_blank");
+  });
+}
+</script>
 
 </body>
 </html>
-
