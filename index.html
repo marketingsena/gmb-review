@@ -46,14 +46,10 @@ textarea {
   font-size: 13px;
   color: #555;
 }
-.loading {
+.status {
   text-align: center;
-  margin-top: 10px;
-}
-.success {
-  text-align: center;
-  color: green;
-  margin-top: 10px;
+  margin-top: 12px;
+  font-weight: bold;
 }
 </style>
 </head>
@@ -81,27 +77,22 @@ textarea {
   <button type="submit">Generate Review</button>
 </form>
 
-<div id="loading" class="loading"></div>
-<div id="success" class="success"></div>
+<div id="status" class="status"></div>
 
 <hr>
 
 <h3>Your Google Review</h3>
 <textarea id="review" readonly></textarea>
 
-<button id="openBtn" onclick="openGoogleReview()" style="display:none;">
-Open Google Review & Paste
-</button>
-
 <script>
 const webhookURL = "https://hook.us2.make.com/0gkgw9kdw46a3csmg5dqn9jqug03y1go";
-let generatedReview = "";
+const googleReviewURL =
+  "https://search.google.com/local/writereview?placeid=ChIJQWh0uNEbw2MRWT7vlIaLRLQ";
 
 document.getElementById("reviewForm").addEventListener("submit", async function(e) {
   e.preventDefault();
 
-  document.getElementById("loading").innerText = "Generating your review…";
-  document.getElementById("success").innerText = "";
+  document.getElementById("status").innerText = "Generating your review…";
 
   const services = Array.from(
     document.querySelectorAll('input[name="services"]:checked')
@@ -109,7 +100,7 @@ document.getElementById("reviewForm").addEventListener("submit", async function(
 
   if (services.length === 0) {
     alert("Please select at least one service.");
-    document.getElementById("loading").innerText = "";
+    document.getElementById("status").innerText = "";
     return;
   }
 
@@ -122,34 +113,28 @@ document.getElementById("reviewForm").addEventListener("submit", async function(
       body: JSON.stringify({ services, location })
     });
 
-    const text = await res.text();
-    if (!text || text.length < 10) throw "Empty response";
+    const reviewText = await res.text();
+    if (!reviewText || reviewText.length < 10) throw "Empty response";
 
-    generatedReview = text;
-    document.getElementById("review").value = text;
+    document.getElementById("review").value = reviewText;
 
     // ✅ AUTO COPY
-    await navigator.clipboard.writeText(text);
+    await navigator.clipboard.writeText(reviewText);
 
-    document.getElementById("loading").innerText = "";
-    document.getElementById("success").innerText =
-      "✅ Review copied automatically. Click below to post on Google.";
+    document.getElementById("status").innerText =
+      "✅ Review copied. Redirecting to Google…";
 
-    document.getElementById("openBtn").style.display = "block";
+    // ✅ AUTO OPEN GOOGLE REVIEW
+    setTimeout(() => {
+      window.open(googleReviewURL, "_blank");
+    }, 800);
 
   } catch (err) {
-    document.getElementById("loading").innerText =
-      "Something went wrong. Please try again.";
+    document.getElementById("status").innerText =
+      "❌ Something went wrong. Please try again.";
     console.error(err);
   }
 });
-
-function openGoogleReview() {
-  window.open(
-    "https://search.google.com/local/writereview?placeid=ChIJQWh0uNEbw2MRWT7vlIaLRLQ",
-    "_blank"
-  );
-}
 </script>
 
 </body>
