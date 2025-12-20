@@ -12,7 +12,7 @@ body {
   margin: auto;
   padding: 20px;
 }
-h2 {
+h2, h3 {
   text-align: center;
 }
 .input-box {
@@ -38,13 +38,27 @@ button {
 }
 textarea {
   width: 100%;
-  height: 150px;
+  height: 160px;
   padding: 10px;
   margin-top: 10px;
 }
 .note {
   font-size: 13px;
   color: #555;
+}
+#status {
+  text-align: center;
+  margin-top: 10px;
+  font-size: 14px;
+}
+.loading {
+  color: #0066cc;
+}
+.error {
+  color: red;
+}
+.success {
+  color: green;
 }
 </style>
 </head>
@@ -92,45 +106,77 @@ textarea {
   <button type="submit">Generate Review</button>
 </form>
 
+<div id="status"></div>
+
 <hr>
 
 <h3>Your Google Review</h3>
-<textarea id="review" readonly></textarea>
+<textarea id="review" readonly placeholder="Your review will appear here..."></textarea>
 
 <button onclick="copyAndOpen()">Copy & Open Google Review</button>
 
 <script>
 const webhookURL = "https://hook.us2.make.com/0gkgw9kdw46a3csmg5dqn9jqug03y1go";
+const statusBox = document.getElementById("status");
+const reviewBox = document.getElementById("review");
 
 document.getElementById("reviewForm").addEventListener("submit", async function(e) {
   e.preventDefault();
+
+  statusBox.className = "loading";
+  statusBox.textContent = "Generating your review, please wait...";
 
   const selectedServices = Array.from(
     document.querySelectorAll('input[name="services"]:checked')
   ).map(el => el.value);
 
   if (selectedServices.length === 0) {
-    alert("Please select at least one service.");
+    statusBox.className = "error";
+    statusBox.textContent = "Please select at least one service.";
     return;
   }
 
-  const location = document.getElementById("location").value;
+  const location = document.getElementById("location").value || "";
 
-  const response = await fetch(webhookURL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      services: selectedServices,
-      location: location
-    })
-  });
+  try {
+    const response = await fetch(webhookURL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        services: selectedServices,
+        location: location
+      })
+    });
 
-  const data = await response.json();
-  document.getElementById("review").value = data.review;
+    if (!response.ok) {
+      throw new Error("Webhook failed");
+    }
+
+    const data = await response.json();
+
+    if (!data.review) {
+      throw new Error("No review returned");
+    }
+
+    reviewBox.value = data.review;
+    statusBox.className = "success";
+    statusBox.textContent = "Review generated successfully ✔";
+
+  } catch (err) {
+    statusBox.className = "error";
+    statusBox.textContent = "Something went wrong. Please try again.";
+    console.error(err);
+  }
 });
 
 function copyAndOpen() {
-  const text = document.getElementById("review").value;
+  const text = reviewBox.value;
+
+  if (!text) {
+    alert("Please generate the review first.");
+    return;
+  }
+
   navigator.clipboard.writeText(text).then(() => {
     window.open(
       "https://search.google.com/local/writereview?placeid=ChIJQWh0uNEbw2MRWT7vlIaLRLQ",
