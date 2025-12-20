@@ -46,14 +46,15 @@ textarea {
   font-size: 13px;
   color: #555;
 }
+.error {
+  color: red;
+  margin-top: 10px;
+  text-align: center;
+}
 .loading {
   text-align: center;
   margin-top: 10px;
-}
-.success {
-  text-align: center;
-  color: green;
-  margin-top: 10px;
+  color: #333;
 }
 </style>
 </head>
@@ -103,32 +104,29 @@ textarea {
 </form>
 
 <div id="loading" class="loading"></div>
-<div id="success" class="success"></div>
+<div id="error" class="error"></div>
 
 <hr>
 
 <h3>Your Google Review</h3>
 <textarea id="review" readonly></textarea>
 
-<button id="openBtn" onclick="openGoogleReview()" style="display:none;">
-Open Google Review & Paste
-</button>
+<button onclick="copyAndOpen()">Copy & Open Google Review</button>
 
 <script>
 const webhookURL = "https://hook.us2.make.com/0gkgw9kdw46a3csmg5dqn9jqug03y1go";
-let generatedReview = "";
 
 document.getElementById("reviewForm").addEventListener("submit", async function(e) {
   e.preventDefault();
 
+  document.getElementById("error").innerText = "";
   document.getElementById("loading").innerText = "Generating your review…";
-  document.getElementById("success").innerText = "";
 
-  const services = Array.from(
+  const selectedServices = Array.from(
     document.querySelectorAll('input[name="services"]:checked')
   ).map(el => el.value);
 
-  if (services.length === 0) {
+  if (selectedServices.length === 0) {
     alert("Please select at least one service.");
     document.getElementById("loading").innerText = "";
     return;
@@ -137,39 +135,45 @@ document.getElementById("reviewForm").addEventListener("submit", async function(
   const location = document.getElementById("location").value;
 
   try {
-    const res = await fetch(webhookURL, {
+    const response = await fetch(webhookURL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ services, location })
+      body: JSON.stringify({
+        services: selectedServices,
+        location: location
+      })
     });
 
-    const text = await res.text();
-    if (!text || text.length < 10) throw "Empty response";
+    const text = await response.text();
 
-    generatedReview = text;
+    if (!text || text.trim().length < 10) {
+      throw new Error("Empty response");
+    }
+
     document.getElementById("review").value = text;
-
-    // ✅ AUTO COPY
-    await navigator.clipboard.writeText(text);
-
     document.getElementById("loading").innerText = "";
-    document.getElementById("success").innerText =
-      "✅ Review copied automatically. Click below to post on Google.";
-
-    document.getElementById("openBtn").style.display = "block";
 
   } catch (err) {
-    document.getElementById("loading").innerText =
+    document.getElementById("loading").innerText = "";
+    document.getElementById("error").innerText =
       "Something went wrong. Please try again.";
     console.error(err);
   }
 });
 
-function openGoogleReview() {
-  window.open(
-    "https://search.google.com/local/writereview?placeid=ChIJQWh0uNEbw2MRWT7vlIaLRLQ",
-    "_blank"
-  );
+function copyAndOpen() {
+  const text = document.getElementById("review").value;
+  if (!text) {
+    alert("Please generate a review first.");
+    return;
+  }
+
+  navigator.clipboard.writeText(text).then(() => {
+    window.open(
+      "https://search.google.com/local/writereview?placeid=ChIJQWh0uNEbw2MRWT7vlIaLRLQ",
+      "_blank"
+    );
+  });
 }
 </script>
 
