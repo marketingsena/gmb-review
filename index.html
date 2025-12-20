@@ -46,15 +46,14 @@ textarea {
   font-size: 13px;
   color: #555;
 }
-.error {
-  color: red;
-  margin-top: 10px;
-  text-align: center;
-}
 .loading {
   text-align: center;
   margin-top: 10px;
-  color: #333;
+}
+.success {
+  text-align: center;
+  color: green;
+  margin-top: 10px;
 }
 </style>
 </head>
@@ -69,18 +68,11 @@ textarea {
   <div class="note">You can select multiple services</div>
 
   <div class="input-box checkbox-list">
-    <label><input type="checkbox" name="services" value="Facebook & Instagram Ads"> Facebook & Instagram Ads</label>
-    <label><input type="checkbox" name="services" value="Lead Generation"> Lead Generation</label>
-    <label><input type="checkbox" name="services" value="Social Media Marketing & Management"> Social Media Marketing & Management</label>
-    <label><input type="checkbox" name="services" value="Digital Marketing"> Digital Marketing</label>
-    <label><input type="checkbox" name="services" value="Google My Business Profile Creation & Optimization"> Google My Business Profile Creation & Optimization</label>
-    <label><input type="checkbox" name="services" value="GMB Call Verification"> GMB Call Verification</label>
-    <label><input type="checkbox" name="services" value="GMB Suspension Removal"> GMB Suspension Removal</label>
     <label><input type="checkbox" name="services" value="GMB Management"> GMB Management</label>
     <label><input type="checkbox" name="services" value="Local SEO"> Local SEO</label>
     <label><input type="checkbox" name="services" value="SEO"> SEO</label>
-    <label><input type="checkbox" name="services" value="Website Development & Design"> Website Development & Design</label>
-    <label><input type="checkbox" name="services" value="Mobile App Development"> Mobile App Development</label>
+    <label><input type="checkbox" name="services" value="Social Media Marketing"> Social Media Marketing</label>
+    <label><input type="checkbox" name="services" value="Website Development"> Website Development</label>
   </div>
 
   <label style="margin-top:15px;"><strong>Your City / Area</strong></label>
@@ -90,29 +82,32 @@ textarea {
 </form>
 
 <div id="loading" class="loading"></div>
-<div id="error" class="error"></div>
+<div id="success" class="success"></div>
 
 <hr>
 
 <h3>Your Google Review</h3>
 <textarea id="review" readonly></textarea>
 
-<button onclick="copyAndOpen()">Copy & Open Google Review</button>
+<button id="openBtn" onclick="openGoogleReview()" style="display:none;">
+Open Google Review & Paste
+</button>
 
 <script>
 const webhookURL = "https://hook.us2.make.com/0gkgw9kdw46a3csmg5dqn9jqug03y1go";
+let generatedReview = "";
 
 document.getElementById("reviewForm").addEventListener("submit", async function(e) {
   e.preventDefault();
 
-  document.getElementById("error").innerText = "";
   document.getElementById("loading").innerText = "Generating your review…";
+  document.getElementById("success").innerText = "";
 
-  const selectedServices = Array.from(
+  const services = Array.from(
     document.querySelectorAll('input[name="services"]:checked')
   ).map(el => el.value);
 
-  if (selectedServices.length === 0) {
+  if (services.length === 0) {
     alert("Please select at least one service.");
     document.getElementById("loading").innerText = "";
     return;
@@ -121,45 +116,39 @@ document.getElementById("reviewForm").addEventListener("submit", async function(
   const location = document.getElementById("location").value;
 
   try {
-    const response = await fetch(webhookURL, {
+    const res = await fetch(webhookURL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        services: selectedServices,
-        location: location
-      })
+      body: JSON.stringify({ services, location })
     });
 
-    const text = await response.text();
+    const text = await res.text();
+    if (!text || text.length < 10) throw "Empty response";
 
-    if (!text || text.trim().length < 10) {
-      throw new Error("Empty response");
-    }
-
+    generatedReview = text;
     document.getElementById("review").value = text;
+
+    // ✅ AUTO COPY
+    await navigator.clipboard.writeText(text);
+
     document.getElementById("loading").innerText = "";
+    document.getElementById("success").innerText =
+      "✅ Review copied automatically. Click below to post on Google.";
+
+    document.getElementById("openBtn").style.display = "block";
 
   } catch (err) {
-    document.getElementById("loading").innerText = "";
-    document.getElementById("error").innerText =
+    document.getElementById("loading").innerText =
       "Something went wrong. Please try again.";
     console.error(err);
   }
 });
 
-function copyAndOpen() {
-  const text = document.getElementById("review").value;
-  if (!text) {
-    alert("Please generate a review first.");
-    return;
-  }
-
-  navigator.clipboard.writeText(text).then(() => {
-    window.open(
-      "https://search.google.com/local/writereview?placeid=ChIJQWh0uNEbw2MRWT7vlIaLRLQ",
-      "_blank"
-    );
-  });
+function openGoogleReview() {
+  window.open(
+    "https://search.google.com/local/writereview?placeid=ChIJQWh0uNEbw2MRWT7vlIaLRLQ",
+    "_blank"
+  );
 }
 </script>
 
